@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useSyncExternalStore } from 'react';
 import { Language, translations, TranslationKey } from '@/lib/translations';
 
 type LanguageContextType = {
@@ -11,31 +11,37 @@ type LanguageContextType = {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>('id'); // Default ke Indonesia
-  const [mounted, setMounted] = useState(false);
+const DEFAULT_LANGUAGE: Language = "id";
 
-  useEffect(() => {
-    const savedLang = localStorage.getItem('app-language') as Language;
-    if (savedLang && (savedLang === 'en' || savedLang === 'id')) {
-      setLanguage(savedLang);
-    }
-    setMounted(true);
-  }, []);
+function readStoredLanguage(): Language {
+  if (typeof window === "undefined") return DEFAULT_LANGUAGE;
+  const savedLang = localStorage.getItem("app-language");
+  return savedLang === "en" || savedLang === "id" ? savedLang : DEFAULT_LANGUAGE;
+}
 
-  const handleSetLanguage = (lang: Language) => {
-    setLanguage(lang);
-    localStorage.setItem('app-language', lang);
+function subscribeLanguage(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const handler = () => callback();
+  window.addEventListener("storage", handler);
+  window.addEventListener("app-language", handler);
+  return () => {
+    window.removeEventListener("storage", handler);
+    window.removeEventListener("app-language", handler);
   };
+}
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const language = useSyncExternalStore(subscribeLanguage, readStoredLanguage, () => DEFAULT_LANGUAGE);
+
+  const handleSetLanguage = useCallback((lang: Language) => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem('app-language', lang);
+    window.dispatchEvent(new Event("app-language"));
+  }, []);
 
   const t = (key: TranslationKey): string => {
     return translations[language][key] || key;
   };
-
-  // Prevent hydration mismatch
-  if (!mounted) {
-    return <div style={{ visibility: 'hidden' }}>{children}</div>;
-  }
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>

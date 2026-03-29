@@ -14,6 +14,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 export default function Dashboard() {
   const [data, setData] = useState<DecisionResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
   const [symbol, setSymbol] = useState("BBCA"); 
   const { t, language, setLanguage } = useLanguage();
 
@@ -31,25 +32,16 @@ export default function Dashboard() {
         throw new Error(result.error || "Gagal mengambil data");
       }
       
+      setLimitReached(false);
       setData(result);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       
       // Handle specifically 429 errors from our backend
-      if (err.message === "Limit API Harian Habis") {
-        setData({
-          symbol: ticker,
-          signal: "LIMIT_REACHED" as any, // We will handle this state
-          score: 0,
-          confidence: "low",
-          entry: 0,
-          stopLoss: 0,
-          takeProfit: 0,
-          reasons: [],
-          strategyUsed: null,
-          context: { trend: "sideways", volume: "rendah" },
-          indicators: { rsi: 0, macd: 0, ma20: 0, ma50: 0 }
-        });
+      const message = err instanceof Error ? err.message : "";
+      if (message === "Limit API Harian Habis") {
+        setLimitReached(true);
+        setData(null);
       } else {
         alert(t('fetchError') + ticker);
       }
@@ -107,13 +99,13 @@ export default function Dashboard() {
             <Loader2 className="w-8 h-8 text-neutral-600 animate-spin" />
             <p className="text-neutral-500 text-sm font-medium uppercase tracking-widest">{t('compilingData')}</p>
           </div>
-        ) : data?.signal === ("LIMIT_REACHED" as any) ? (
+        ) : limitReached ? (
           <div className="flex flex-col items-center justify-center py-32 space-y-6 max-w-md mx-auto text-center">
             <div className="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center border border-rose-500/20">
               <AlertTriangle className="w-8 h-8 text-rose-500" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-white tracking-tight">Today's Usage Limit Reached</h2>
+              <h2 className="text-2xl font-bold text-white tracking-tight">Daily Usage Limit Reached</h2>
               <p className="text-neutral-400">
                 You have reached your DataSectors API daily limit (100 of 100 requests). 
                 Please try again tomorrow when the limit resets, or upgrade your API plan.

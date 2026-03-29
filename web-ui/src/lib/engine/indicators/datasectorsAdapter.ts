@@ -28,11 +28,11 @@ export async function getIndicators(symbol: string): Promise<PreCalculatedIndica
   try {
     // Run requests in parallel
     const [rsiRes, macdRes, ma20Res, ma50Res, ohlcRes] = await Promise.all([
-      fetchRSI(symbol).catch((e: any) => { console.warn(`Failed to fetch RSI for ${symbol}`, e); return null; }),
-      fetchMACD(symbol).catch((e: any) => { console.warn(`Failed to fetch MACD for ${symbol}`, e); return null; }),
-      fetchMA(symbol, 20).catch((e: any) => { console.warn(`Failed to fetch MA20 for ${symbol}`, e); return null; }),
-      fetchMA(symbol, 50).catch((e: any) => { console.warn(`Failed to fetch MA50 for ${symbol}`, e); return null; }),
-      fetchOHLC(symbol).catch((e: any) => { console.warn(`Failed to fetch OHLC for ${symbol}`, e); return null; })
+      fetchRSI(symbol).catch((e: unknown) => { console.warn(`Failed to fetch RSI for ${symbol}`, e); return null; }),
+      fetchMACD(symbol).catch((e: unknown) => { console.warn(`Failed to fetch MACD for ${symbol}`, e); return null; }),
+      fetchMA(symbol, 20).catch((e: unknown) => { console.warn(`Failed to fetch MA20 for ${symbol}`, e); return null; }),
+      fetchMA(symbol, 50).catch((e: unknown) => { console.warn(`Failed to fetch MA50 for ${symbol}`, e); return null; }),
+      fetchOHLC(symbol).catch((e: unknown) => { console.warn(`Failed to fetch OHLC for ${symbol}`, e); return null; })
     ]);
 
     // Mapping logic based on assumed DataSectors response structure.
@@ -55,7 +55,7 @@ export async function getIndicators(symbol: string): Promise<PreCalculatedIndica
 
     return indicators;
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`[Adapter Error] Failed to get indicators for ${symbol}`, error);
     // Return safe fallback values so engine doesn't crash
     return {

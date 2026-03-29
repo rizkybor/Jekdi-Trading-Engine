@@ -19,7 +19,10 @@ export function analyze(
   config: EngineConfig,
   preCalculated?: PreCalculatedIndicators
 ): DecisionResult {
-  if (candles.length < config.indicators.maLong && !preCalculated) {
+  if (
+    candles.length < config.indicators.maLong &&
+    (!preCalculated || Object.values(preCalculated).some((v) => v === 0))
+  ) {
     throw new Error(`Not enough data. Need at least ${config.indicators.maLong} candles or pre-calculated indicators.`);
   }
 
