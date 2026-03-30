@@ -5,12 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(value: number, lang: string = 'id') {
+export function formatCurrency(value: number, lang: string = 'id', currency: string = 'IDR') {
   return new Intl.NumberFormat(lang === 'id' ? 'id-ID' : 'en-US', {
     style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    currency: currency,
+    minimumFractionDigits: currency === 'IDR' ? 0 : 2,
+    maximumFractionDigits: currency === 'IDR' ? 0 : 6,
   }).format(value);
 }
 

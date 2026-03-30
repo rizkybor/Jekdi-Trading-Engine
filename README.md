@@ -1,19 +1,20 @@
 # Jekdi Multi-Strategy Adaptive Trading Engine
 
-Trading Decision Engine untuk saham (fokus awal pada IDX) yang didesain secara modular, berbasis TypeScript, dan siap diintegrasikan ke platform SaaS. Engine ini **tidak hanya menggunakan indikator statis**, tetapi juga memahami **Market Context** dan menggunakan sistem pembobotan (*Scoring System*) untuk menghasilkan keputusan (*Trading Signal*) yang lebih cerdas seperti *quant trader* profesional.
+Trading Decision Engine untuk Saham (IDX) & Cryptocurrency yang didesain secara modular, berbasis TypeScript, dan memiliki Web UI Dashboard interaktif. Engine ini **tidak hanya menggunakan indikator statis**, tetapi juga memahami **Market Context**, beradaptasi dengan tingkat volatilitas *crypto vs saham*, dan menggunakan sistem pembobotan (*Scoring System*) untuk menghasilkan keputusan (*Trading Signal*) yang logis seperti *quant trader* profesional.
 
 ## 🌟 Fitur Utama
 
-Engine ini memiliki 3 Strategi Utama (*Edge Strategy*) yang beradaptasi dengan kondisi pasar:
+Engine ini memiliki 3 Strategi Utama (*Edge Strategy*) yang otomatis beradaptasi dengan kondisi pasar:
 
-1. **Pullback Strategy**: Mencari peluang masuk (*Buy/Sell*) saat harga kembali menyentuh area MA20 atau level Support/Resistance setelah bergerak dalam tren.
-2. **Breakout Strategy**: Mencari peluang masuk saat harga menembus level Support/Resistance dengan *volume spike* (dilengkapi *Aggressive Mode* opsional).
-3. **Trend Continuation Strategy**: Mendeteksi tren yang sangat kuat di mana harga terus melaju tanpa mengalami pullback, sehingga menghindari kehilangan momentum.
+1. **Pullback Strategy**: Mencari peluang masuk (*Buy/Sell*) saat harga mengalami retrace/koreksi ke area Moving Average (MA20) atau level Support/Resistance dalam sebuah tren yang valid. (Range RSI dioptimalkan lebih fleksibel untuk pasar Crypto).
+2. **Breakout Strategy**: Mencari peluang masuk saat harga berhasil menembus level Support/Resistance krusial, divalidasi oleh *volume spike* (dilengkapi *Aggressive Mode* opsional).
+3. **Trend Continuation Strategy**: Mendeteksi tren yang sangat kuat di mana harga terus melaju (*rally* / *dump*) tanpa mengalami pullback, mengamankan momentum pergerakan tajam (terutama di pasar Crypto).
 
-### 🛡️ Risk Management Bawaan
-- Menghitung **Stop Loss** otomatis berdasarkan level *support* / *resistance* terdekat.
-- Menghitung **Take Profit** otomatis dengan rasio Risk to Reward default 1:2.
-- **Trade Filter**: Menolak transaksi (*NO TRADE*) pada kondisi pasar yang sangat *sideways*, volume terlalu sepi, atau terjadi pergerakan ekstrem (*extreme volatility*).
+### 🛡️ Adaptive Market Filter & Risk Management
+- **Crypto vs Stock Logic**: Aturan filter volume dan konfirmasi indikator secara otomatis menyesuaikan diri (contoh: *crypto* tidak mewajibkan *volume spike* ekstrim untuk konfirmasi karena volatilitas alaminya, sementara saham diwajibkan).
+- **Auto Stop Loss**: Dihitung otomatis berdasarkan level *support* / *resistance* terdekat.
+- **Auto Take Profit**: Dihitung otomatis menggunakan target rasio Risk to Reward default 1:2.
+- **Noise Reduction**: Mencegah sinyal palsu dengan menolak transaksi (*NO TRADE*) pada kondisi pasar yang benar-benar mati (*sideways & low volume*) atau terjadi *extreme volatility* yang membahayakan.
 
 ---
 

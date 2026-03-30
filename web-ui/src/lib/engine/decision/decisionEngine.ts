@@ -1,8 +1,8 @@
 import { Candle, EngineConfig, DecisionResult, SignalType, ConfidenceLevel } from "../types";
-import { getMASeries, evaluateMA } from "../indicators/movingAverage";
+import { getMASeries } from "../indicators/movingAverage";
 import { getRSISeries, evaluateRSI } from "../indicators/rsi";
 import { getMACDSeries, evaluateMACD } from "../indicators/macd";
-import { getVolumeMA, evaluateVolume } from "../indicators/volume";
+import { getVolumeMA } from "../indicators/volume";
 
 import { detectTrend } from "../context/trend";
 import { detectSupportResistance, isNearSupportOrResistance } from "../context/supportResistance";
@@ -17,7 +17,8 @@ export function analyze(
   symbol: string,
   candles: Candle[],
   config: EngineConfig,
-  preCalculated?: PreCalculatedIndicators
+  preCalculated?: PreCalculatedIndicators,
+  market: "idx" | "crypto" = "idx"
 ): DecisionResult {
   if (
     candles.length < config.indicators.maLong &&
@@ -67,7 +68,6 @@ export function analyze(
 
   const rsiEval = evaluateRSI(rsiVal);
   const macdEval = evaluateMACD(macdVal, macdSignalVal, macdHistVal, prevMacdHistVal);
-  const volumeEval = evaluateVolume(currentCandle.volume, volMaVal);
 
   // --- 2. Market Context Layer ---
   const trend = detectTrend(maShortVal, maLongVal, currentPrice);
@@ -96,6 +96,7 @@ export function analyze(
     isExtremeVolatility: volatility.isExtreme,
     macdSignal: macdEval.signal,
     aggressiveBreakout: config.strategies.aggressiveBreakout,
+    market
   });
 
   // --- 4. Scoring System ---
@@ -108,11 +109,13 @@ export function analyze(
     trend,
     volumeContext,
     isConfirmed: edgeResult.confirmed,
+    market
   });
 
   // --- Decision Rules & Confidence ---
   let finalSignal: SignalType = "NO TRADE";
-  if (score >= config.decisionThresholds.buy) {
+  const buyThreshold = market === "crypto" ? 60 : config.decisionThresholds.buy;
+  if (score >= buyThreshold) {
     // Breakout non-aggressive might return HOLD from edgeResult, but if score is high enough we still output what edge says
     finalSignal = edgeResult.signal as SignalType;
   } else if (score >= config.decisionThresholds.hold || edgeResult.signal === "HOLD") {
@@ -127,14 +130,21 @@ export function analyze(
   if (edgeResult.strategyUsed !== null) {
     alignmentFactors++;
   }
-  if (volumeContext === "spike" || volumeContext === "extreme_spike") {
+  if (volumeContext === "spike" || volumeContext === "extreme_spike" || (market === "crypto" && (volumeContext === "normal" || volumeContext === "high"))) {
+    // In crypto, normal/high volume is enough for alignment confidence, doesn't need to be a spike
     alignmentFactors++;
   }
 
   let confidence: ConfidenceLevel = "low";
-  if (alignmentFactors >= 3) confidence = "high";
-  else if (alignmentFactors === 2) confidence = "medium";
-  else confidence = "low";
+  if (market === "crypto") {
+    if (alignmentFactors >= 3) confidence = "high";
+    else if (alignmentFactors === 2) confidence = "medium";
+    else confidence = "low";
+  } else {
+    if (alignmentFactors >= 3) confidence = "high";
+    else if (alignmentFactors === 2) confidence = "medium";
+    else confidence = "low";
+  }
 
   // --- Risk Management ---
   let stopLoss = 0;
@@ -170,5 +180,6 @@ export function analyze(
       ma20: Number(maShortVal.toFixed(2)),
       ma50: Number(maLongVal.toFixed(2)),
     },
+    debug: edgeResult.debug,
   };
 }

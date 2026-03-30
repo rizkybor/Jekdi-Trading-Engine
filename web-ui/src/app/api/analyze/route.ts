@@ -16,27 +16,41 @@ type DataSectorsChartResponse = {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const symbol = searchParams.get('symbol') || 'BBCA';
+  const market = searchParams.get('market') || 'idx';
 
   try {
     let rawData: unknown[] = [];
     const API_KEY = process.env.DATASECTORS_API_KEY || '';
     
-    // Create date range for the last ~6 months to get enough data for MA50
-    const toDate = new Date().toISOString().split('T')[0];
-    const fromDate = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
     try {
-      const response = await fetch(`https://api.datasectors.com/api/chart-saham/${symbol}/daily?from=${fromDate}&to=${toDate}`, {
-        headers: { 'X-API-Key': API_KEY }
-      });
+      let response;
+      if (market === 'crypto') {
+        const formattedSymbol = symbol.includes(':') ? symbol : `BINANCE:${symbol}`;
+        response = await fetch(`https://api.datasectors.com/api/chart/historical?symbol=${formattedSymbol}&timeframe=D&range=200`, {
+          headers: { 'X-API-Key': API_KEY }
+        });
+      } else {
+        const toDate = new Date().toISOString().split('T')[0];
+        const fromDate = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        response = await fetch(`https://api.datasectors.com/api/chart-saham/${symbol}/daily?from=${fromDate}&to=${toDate}`, {
+          headers: { 'X-API-Key': API_KEY }
+        });
+      }
       
       if (response.ok) {
-        const json = (await response.json()) as DataSectorsChartResponse;
-        // The data is deeply nested: json.data.data.data.chartbit
-        if (!json?.data?.data?.data?.chartbit || !Array.isArray(json.data.data.data.chartbit)) {
-          return NextResponse.json({ error: 'Invalid API response format' }, { status: 500 });
+        if (market === 'crypto') {
+          const json = await response.json();
+          if (!json?.success || !Array.isArray(json.data)) {
+            return NextResponse.json({ error: 'Invalid API response format for crypto' }, { status: 500 });
+          }
+          rawData = json.data;
+        } else {
+          const json = (await response.json()) as DataSectorsChartResponse;
+          if (!json?.data?.data?.data?.chartbit || !Array.isArray(json.data.data.data.chartbit)) {
+            return NextResponse.json({ error: 'Invalid API response format' }, { status: 500 });
+          }
+          rawData = json.data.data.data.chartbit;
         }
-        rawData = json.data.data.data.chartbit;
       } else if (response.status === 429) {
         return NextResponse.json(
           { error: "Limit API DataSectors harian Anda telah habis. Silakan coba kembali besok hari." }, 
@@ -69,8 +83,9 @@ export async function GET(request: Request) {
         if (typeof item !== "object" || item === null) return null;
         const record = item as Record<string, unknown>;
 
-        const unixdate = record.unixdate;
-        if (typeof unixdate !== "number") return null;
+        // Stock uses unixdate, crypto uses time
+        const rawTime = record.time ?? record.unixdate;
+        if (typeof rawTime !== "number") return null;
 
         const open = toNumber(record.open);
         const high = toNumber(record.high);
@@ -81,7 +96,7 @@ export async function GET(request: Request) {
         if ([open, high, low, close, volume].some((n) => Number.isNaN(n))) return null;
 
         return {
-          timestamp: unixdate * 1000,
+          timestamp: rawTime * 1000,
           open,
           high,
           low,
@@ -98,7 +113,8 @@ export async function GET(request: Request) {
 
     // Run Trading Engine using historical candles. The engine will calculate indicators manually.
     // We are no longer using the adapter because DataSectors API provides OHLC but not direct indicator endpoints for free/easily.
-    const result = analyze(symbol.toUpperCase(), candles, defaultConfig);
+    const finalSymbol = market === 'crypto' ? (symbol.includes(':') ? symbol : `BINANCE:${symbol}`) : symbol;
+    const result = analyze(finalSymbol.toUpperCase(), candles, defaultConfig, undefined, market as "idx" | "crypto");
 
     return NextResponse.json({
       ...result,

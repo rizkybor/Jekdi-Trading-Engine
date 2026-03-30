@@ -6,7 +6,7 @@ import { BrainCircuit, ChevronDown, ChevronUp, CheckCircle2, XCircle } from "luc
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-export function ReasoningPanel({ reasons, signal }: { reasons: string[], signal: string }) {
+export function ReasoningPanel({ reasons }: { reasons: string[] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useLanguage();
   

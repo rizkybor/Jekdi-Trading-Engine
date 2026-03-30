@@ -16,13 +16,14 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
   const [symbol, setSymbol] = useState("BBCA"); 
+  const [market, setMarket] = useState<"idx" | "crypto">("idx");
   const { t, language, setLanguage } = useLanguage();
 
-  const fetchAnalysis = async (ticker: string) => {
+  const fetchAnalysis = async (ticker: string, targetMarket: "idx" | "crypto" = market) => {
     if (!ticker.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/analyze?symbol=${ticker}`);
+      const res = await fetch(`/api/analyze?symbol=${ticker}&market=${targetMarket}`);
       const result = await res.json();
       
       if (!res.ok) {
@@ -51,7 +52,10 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchAnalysis(symbol);
+    // We only want to fetch on initial mount for the default symbol
+    const initialSymbol = "BBCA";
+    fetchAnalysis(initialSymbol, "idx");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -66,7 +70,34 @@ export default function Dashboard() {
             <span className="font-bold text-white tracking-tight">Jekdi Trading Engine</span>
           </div>
 
-          <div className="flex items-center gap-3 w-full max-w-sm justify-end">
+          <div className="flex items-center gap-3 w-full max-w-xl justify-end">
+            <div className="flex bg-[#141414] border border-neutral-800 rounded-md p-1">
+              <button
+                onClick={() => {
+                  setMarket("idx");
+                  if (symbol !== "BBCA") setSymbol("BBCA");
+                  fetchAnalysis("BBCA", "idx");
+                }}
+                className={`px-3 py-1 text-xs font-bold uppercase tracking-widest rounded-sm transition-colors ${
+                  market === "idx" ? "bg-neutral-800 text-white" : "text-neutral-500 hover:text-neutral-300"
+                }`}
+              >
+                IDX
+              </button>
+              <button
+                onClick={() => {
+                  setMarket("crypto");
+                  if (symbol !== "BTCUSDT") setSymbol("BTCUSDT");
+                  fetchAnalysis("BTCUSDT", "crypto");
+                }}
+                className={`px-3 py-1 text-xs font-bold uppercase tracking-widest rounded-sm transition-colors ${
+                  market === "crypto" ? "bg-neutral-800 text-white" : "text-neutral-500 hover:text-neutral-300"
+                }`}
+              >
+                Crypto
+              </button>
+            </div>
+            
             <div className="relative w-full max-w-xs">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
               <input 
@@ -74,7 +105,7 @@ export default function Dashboard() {
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value.toUpperCase())}
                 onKeyDown={(e) => e.key === 'Enter' && fetchAnalysis(symbol)}
-                placeholder={t('searchPlaceholder')} 
+                placeholder={market === 'crypto' ? 'Ex: BTCUSDT...' : t('searchPlaceholder')} 
                 className="w-full bg-[#141414] border border-neutral-800 text-white text-sm px-9 py-1.5 rounded-md outline-none focus:border-neutral-600 transition-colors uppercase placeholder:normal-case placeholder:text-neutral-600"
               />
               {loading && (
@@ -138,7 +169,7 @@ export default function Dashboard() {
               </div>
 
               <div className="lg:col-span-4 space-y-6">
-                <ReasoningPanel reasons={data.reasons} signal={data.signal} />
+                <ReasoningPanel reasons={data.reasons} />
                 {data.strategyUsed && (
                   <StrategyExplanation strategy={data.strategyUsed} />
                 )}

@@ -66,4 +66,8 @@ export interface DecisionResult {
     ma20: number;
     ma50: number;
   };
+  debug?: {
+    strategyChecked: string[];
+    rejectedReason: string[];
+  };
 }

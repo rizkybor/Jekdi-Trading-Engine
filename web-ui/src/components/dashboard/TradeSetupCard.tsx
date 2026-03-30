@@ -14,6 +14,8 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
   const risk = Math.abs(data.entry - data.stopLoss);
   const reward = Math.abs(data.takeProfit - data.entry);
   const rrRatio = (reward / risk).toFixed(1);
+  const isCrypto = data.symbol.includes(':');
+  const currency = isCrypto ? 'USD' : 'IDR';
 
   return (
     <Card>
@@ -29,7 +31,7 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
             <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider flex items-center gap-1.5 mb-2">
               {t('entryPrice')}
             </span>
-            <span className="text-xl font-bold text-white">{formatCurrency(data.entry, language)}</span>
+            <span className="text-xl font-bold text-white">{formatCurrency(data.entry, language, currency)}</span>
           </div>
           
           <div className="bg-[#0f0f0f] p-4 flex flex-col justify-between relative overflow-hidden group">
@@ -37,7 +39,7 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
             <span className="text-rose-500/80 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 mb-2 relative z-10">
               <ShieldAlert className="w-3 h-3" /> {t('stopLoss')}
             </span>
-            <span className="text-xl font-bold text-rose-500 relative z-10">{formatCurrency(data.stopLoss, language)}</span>
+            <span className="text-xl font-bold text-rose-500 relative z-10">{formatCurrency(data.stopLoss, language, currency)}</span>
           </div>
 
           <div className="bg-[#0f0f0f] p-4 flex flex-col justify-between relative overflow-hidden group">
@@ -45,7 +47,7 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
             <span className="text-emerald-500/80 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 mb-2 relative z-10">
               <Target className="w-3 h-3" /> {t('takeProfit')}
             </span>
-            <span className="text-xl font-bold text-emerald-500 relative z-10">{formatCurrency(data.takeProfit, language)}</span>
+            <span className="text-xl font-bold text-emerald-500 relative z-10">{formatCurrency(data.takeProfit, language, currency)}</span>
           </div>
         </div>
 

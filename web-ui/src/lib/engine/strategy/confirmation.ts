@@ -4,7 +4,8 @@ export function checkConfirmation(
   candles: Candle[],
   isVolumeSpike: boolean,
   macdSignal: "bullish" | "bearish" | "neutral",
-  targetDirection: "BUY" | "SELL"
+  targetDirection: "BUY" | "SELL",
+  market: "idx" | "crypto" = "idx"
 ): { confirmed: boolean; reasons: string[] } {
   if (candles.length < 2) return { confirmed: false, reasons: [] };
 
@@ -42,5 +43,7 @@ export function checkConfirmation(
     }
   }
 
-  return { confirmed: confirmations >= 2, reasons };
+  const requiredConfirmations = market === "crypto" ? 1 : 2;
+
+  return { confirmed: confirmations >= requiredConfirmations, reasons };
 }

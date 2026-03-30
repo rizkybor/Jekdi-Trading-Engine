@@ -11,8 +11,12 @@ export function SignalCard({ data }: { data: DecisionResult }) {
       {/* Left side: Symbol & Main Signal */}
       <div className="p-6 md:p-8 flex-1 border-b md:border-b-0 md:border-r border-neutral-800 flex flex-col justify-center">
         <div className="flex items-baseline gap-3 mb-2">
-          <h1 className="text-5xl font-bold tracking-tight text-white m-0 leading-none">{data.symbol}</h1>
-          <span className="text-neutral-500 font-medium tracking-widest text-sm">IDX</span>
+          <h1 className="text-5xl font-bold tracking-tight text-white m-0 leading-none">
+            {data.symbol.includes(':') ? data.symbol.split(':')[1] : data.symbol}
+          </h1>
+          <span className="text-neutral-500 font-medium tracking-widest text-sm">
+            {data.symbol.includes(':') ? data.symbol.split(':')[0] : 'IDX'}
+          </span>
         </div>
         
         <div className="flex items-center gap-3 mt-4 flex-wrap">

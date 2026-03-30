@@ -20,6 +20,7 @@ export interface EdgeStrategyInput {
   isExtremeVolatility: boolean;
   macdSignal: "bullish" | "bearish" | "neutral";
   aggressiveBreakout: boolean;
+  market?: "idx" | "crypto";
 }
 
 export interface EdgeStrategyOutput {
@@ -28,6 +29,10 @@ export interface EdgeStrategyOutput {
   reasons: string[];
   passedFilter: boolean;
   confirmed: boolean;
+  debug?: {
+    strategyChecked: string[];
+    rejectedReason: string[];
+  };
 }
 
 export function evaluateEdgeStrategy(input: EdgeStrategyInput): EdgeStrategyOutput {
@@ -45,49 +50,59 @@ export function evaluateEdgeStrategy(input: EdgeStrategyInput): EdgeStrategyOutp
     volumeContext,
     isExtremeVolatility,
     macdSignal,
-    aggressiveBreakout
+    aggressiveBreakout,
+    market = "idx"
   } = input;
 
   const reasons: string[] = [];
+  const debug = { strategyChecked: [] as string[], rejectedReason: [] as string[] };
 
   // 1. Trade Filter
-  const filter = isTradeFilteredOut(volumeContext, isExtremeVolatility, trend);
+  const filter = isTradeFilteredOut(volumeContext, isExtremeVolatility, trend, market);
   if (filter.filtered) {
     reasons.push(`Trade filtered out: ${filter.reason}`);
-    return { signal: "NONE", strategyUsed: null, reasons, passedFilter: false, confirmed: false };
+    debug.rejectedReason.push(`Filter: ${filter.reason}`);
+    return { signal: "NONE", strategyUsed: null, reasons, passedFilter: false, confirmed: false, debug };
   }
 
   // 2. Trend Filter (Only BUY above MA50, Only SELL below MA50)
   if (trend === "uptrend" && currentPrice < maLong) {
     reasons.push("Price is below MA50 during uptrend, invalidating BUY setup");
-    return { signal: "NONE", strategyUsed: null, reasons, passedFilter: false, confirmed: false };
+    debug.rejectedReason.push("Trend Filter: Price below MA50 in uptrend");
+    return { signal: "NONE", strategyUsed: null, reasons, passedFilter: false, confirmed: false, debug };
   }
 
   if (trend === "downtrend" && currentPrice > maLong) {
     reasons.push("Price is above MA50 during downtrend, invalidating SELL setup");
-    return { signal: "NONE", strategyUsed: null, reasons, passedFilter: false, confirmed: false };
+    debug.rejectedReason.push("Trend Filter: Price above MA50 in downtrend");
+    return { signal: "NONE", strategyUsed: null, reasons, passedFilter: false, confirmed: false, debug };
   }
 
   // 3. Strategy Selection Flow
   const isVolumeSpike = volumeContext === "spike" || volumeContext === "extreme_spike";
 
   // A. Try Pullback Strategy First
-  const pullback = detectPullback(currentPrice, maShort, rsi, trend, nearSupport, nearResistance);
+  debug.strategyChecked.push("pullback");
+  const pullback = detectPullback(currentPrice, maShort, rsi, trend, nearSupport, nearResistance, market);
   if (pullback !== "NONE") {
     const targetDirection = pullback === "BUY_PULLBACK" ? "BUY" : "SELL";
     reasons.push(`Valid ${targetDirection} pullback detected`);
     
-    const confirmation = checkConfirmation(candles, isVolumeSpike, macdSignal, targetDirection);
+    const confirmation = checkConfirmation(candles, isVolumeSpike, macdSignal, targetDirection, market);
     if (!confirmation.confirmed) {
-      reasons.push("Pullback signal not confirmed. Missing at least 2 confirmation factors.");
-      return { signal: "NONE", strategyUsed: "pullback", reasons, passedFilter: true, confirmed: false };
+      reasons.push(`Pullback signal not confirmed. Missing confirmation factors (Req: ${market === "crypto" ? 1 : 2}).`);
+      debug.rejectedReason.push("Pullback not confirmed");
+      return { signal: "NONE", strategyUsed: "pullback", reasons, passedFilter: true, confirmed: false, debug };
     }
 
     reasons.push(`Pullback confirmed: ${confirmation.reasons.join(", ")}`);
-    return { signal: targetDirection, strategyUsed: "pullback", reasons, passedFilter: true, confirmed: true };
+    return { signal: targetDirection, strategyUsed: "pullback", reasons, passedFilter: true, confirmed: true, debug };
+  } else {
+    debug.rejectedReason.push("Pullback conditions not met");
   }
 
   // B. Try Breakout Strategy
+  debug.strategyChecked.push("breakout");
   const breakout = detectBreakout(currentPrice, resistance, support, volumeContext, rsi);
   if (breakout !== "NONE") {
     const targetDirection = breakout === "BUY_BREAKOUT" ? "BUY" : "SELL";
@@ -95,35 +110,44 @@ export function evaluateEdgeStrategy(input: EdgeStrategyInput): EdgeStrategyOutp
     
     if (!aggressiveBreakout) {
       reasons.push("Breakout detected, wait for confirmation or retest. Returning HOLD.");
-      return { signal: "HOLD", strategyUsed: "breakout", reasons, passedFilter: true, confirmed: true };
+      return { signal: "HOLD", strategyUsed: "breakout", reasons, passedFilter: true, confirmed: true, debug };
     }
 
-    const confirmation = checkConfirmation(candles, isVolumeSpike, macdSignal, targetDirection);
+    const confirmation = checkConfirmation(candles, isVolumeSpike, macdSignal, targetDirection, market);
     if (!confirmation.confirmed) {
-      reasons.push("Breakout signal not confirmed. Missing at least 2 confirmation factors.");
-      return { signal: "NONE", strategyUsed: "breakout", reasons, passedFilter: true, confirmed: false };
+      reasons.push(`Breakout signal not confirmed. Missing confirmation factors (Req: ${market === "crypto" ? 1 : 2}).`);
+      debug.rejectedReason.push("Breakout not confirmed");
+      return { signal: "NONE", strategyUsed: "breakout", reasons, passedFilter: true, confirmed: false, debug };
     }
 
     reasons.push(`Breakout confirmed: ${confirmation.reasons.join(", ")} (Aggressive Mode)`);
-    return { signal: targetDirection, strategyUsed: "breakout", reasons, passedFilter: true, confirmed: true };
+    return { signal: targetDirection, strategyUsed: "breakout", reasons, passedFilter: true, confirmed: true, debug };
+  } else {
+    debug.rejectedReason.push("Breakout conditions not met");
   }
 
   // C. Try Trend Continuation Strategy
-  const continuation = detectContinuation(currentPrice, maShort, maLong, rsi, trend);
+  debug.strategyChecked.push("continuation");
+  const continuation = detectContinuation(currentPrice, maShort, maLong, rsi, trend, market);
   if (continuation !== "NONE") {
     const targetDirection = continuation === "BUY_CONTINUATION" ? "BUY" : "SELL";
     reasons.push(`Valid ${targetDirection} trend continuation detected`);
     
-    const confirmation = checkConfirmation(candles, isVolumeSpike, macdSignal, targetDirection);
+    const confirmation = checkConfirmation(candles, isVolumeSpike, macdSignal, targetDirection, market);
     if (!confirmation.confirmed) {
-      reasons.push("Continuation signal not confirmed. Missing at least 2 confirmation factors.");
-      return { signal: "NONE", strategyUsed: "continuation", reasons, passedFilter: true, confirmed: false };
+      reasons.push(`Continuation signal not confirmed. Missing confirmation factors (Req: ${market === "crypto" ? 1 : 2}).`);
+      debug.rejectedReason.push("Continuation not confirmed");
+      return { signal: "NONE", strategyUsed: "continuation", reasons, passedFilter: true, confirmed: false, debug };
     }
 
     reasons.push(`Continuation confirmed: ${confirmation.reasons.join(", ")}`);
-    return { signal: targetDirection, strategyUsed: "continuation", reasons, passedFilter: true, confirmed: true };
+    return { signal: targetDirection, strategyUsed: "continuation", reasons, passedFilter: true, confirmed: true, debug };
+  } else {
+    debug.rejectedReason.push("Continuation conditions not met");
   }
 
-  reasons.push("No valid strategy setup found (Pullback, Breakout, or Continuation)");
-  return { signal: "NONE", strategyUsed: null, reasons, passedFilter: true, confirmed: false };
+  // Fallback if no strategy matches
+  reasons.push("No clear trading setup detected");
+  debug.rejectedReason.push("No strategy matched");
+  return { signal: "NONE", strategyUsed: null, reasons, passedFilter: true, confirmed: false, debug };
 }
