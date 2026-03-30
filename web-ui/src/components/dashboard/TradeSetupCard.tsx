@@ -1,11 +1,12 @@
 import { DecisionResult } from "@/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
 import { Target, ShieldAlert, Coins, Clock, CalendarDays, Activity } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCurrency, Currency } from "@/contexts/CurrencyContext";
 
 export function TradeSetupCard({ data }: { data: DecisionResult }) {
   const { t, language } = useLanguage();
+  const { formatPrice } = useCurrency();
 
   if (data.signal === "NO TRADE" || data.entry === 0) {
     return null;
@@ -15,7 +16,7 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
   const reward = Math.abs(data.takeProfit - data.entry);
   const rrRatio = (reward / risk).toFixed(1);
   const isCrypto = data.symbol.includes(':');
-  const currency = isCrypto ? 'USD' : 'IDR';
+  const baseCurrency: Currency = isCrypto ? 'USD' : 'IDR';
 
   return (
     <Card>
@@ -31,7 +32,7 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
             <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider flex items-center gap-1.5 mb-2">
               {t('entryPrice')}
             </span>
-            <span className="text-lg md:text-xl font-bold text-white">{formatCurrency(data.entry, language, currency)}</span>
+            <span className="text-lg md:text-xl font-bold text-white">{formatPrice(data.entry, baseCurrency, language)}</span>
           </div>
           
           <div className="bg-[#0f0f0f] p-4 flex flex-col justify-between relative overflow-hidden group">
@@ -39,7 +40,7 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
             <span className="text-rose-500/80 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 mb-2 relative z-10">
               <ShieldAlert className="w-3 h-3" /> {t('stopLoss')}
             </span>
-            <span className="text-lg md:text-xl font-bold text-rose-500 relative z-10">{formatCurrency(data.stopLoss, language, currency)}</span>
+            <span className="text-lg md:text-xl font-bold text-rose-500 relative z-10">{formatPrice(data.stopLoss, baseCurrency, language)}</span>
           </div>
 
           <div className="bg-[#0f0f0f] p-4 flex flex-col justify-between relative overflow-hidden group">
@@ -47,7 +48,7 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
             <span className="text-emerald-500/80 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 mb-2 relative z-10">
               <Target className="w-3 h-3" /> {t('takeProfit')}
             </span>
-            <span className="text-lg md:text-xl font-bold text-emerald-500 relative z-10">{formatCurrency(data.takeProfit, language, currency)}</span>
+            <span className="text-lg md:text-xl font-bold text-emerald-500 relative z-10">{formatPrice(data.takeProfit, baseCurrency, language)}</span>
           </div>
         </div>
 
@@ -98,10 +99,10 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
                     <div>
                       <span className="text-[10px] text-neutral-500 uppercase tracking-widest mb-1 block">Target Entry</span>
                       {plan.mode === "precise" && plan.entry !== undefined ? (
-                        <span className="text-sm font-bold text-white">{plan.entry === 0 ? "-" : formatCurrency(plan.entry, language, currency)}</span>
+                        <span className="text-sm font-bold text-white">{plan.entry === 0 ? "-" : formatPrice(plan.entry, baseCurrency, language)}</span>
                       ) : plan.mode === "range" && Array.isArray(plan.entryZone) ? (
                         <span className="text-sm font-bold text-white">
-                          {plan.entryZone[0] === 0 ? "-" : `${formatCurrency(plan.entryZone[0], language, currency)} - ${formatCurrency(plan.entryZone[1], language, currency)}`}
+                          {plan.entryZone[0] === 0 ? "-" : `${formatPrice(plan.entryZone[0], baseCurrency, language)} - ${formatPrice(plan.entryZone[1], baseCurrency, language)}`}
                         </span>
                       ) : (
                         <span className="text-xs text-neutral-300 leading-relaxed block">{plan.entryZone}</span>
@@ -113,11 +114,11 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
                       <div className="flex justify-between items-center gap-4">
                         <div>
                           <span className="text-[10px] text-rose-500/80 uppercase tracking-widest mb-1 block">Stop Loss</span>
-                          <span className="text-sm font-bold text-rose-500">{plan.stopLoss === 0 ? "-" : formatCurrency(plan.stopLoss as number, language, currency)}</span>
+                          <span className="text-sm font-bold text-rose-500">{plan.stopLoss === 0 ? "-" : formatPrice(plan.stopLoss as number, baseCurrency, language)}</span>
                         </div>
                         <div className="text-right">
                           <span className="text-[10px] text-emerald-500/80 uppercase tracking-widest mb-1 block">Take Profit</span>
-                          <span className="text-sm font-bold text-emerald-500">{plan.takeProfit === 0 ? "-" : formatCurrency(plan.takeProfit as number, language, currency)}</span>
+                          <span className="text-sm font-bold text-emerald-500">{plan.takeProfit === 0 ? "-" : formatPrice(plan.takeProfit as number, baseCurrency, language)}</span>
                         </div>
                       </div>
                     )}

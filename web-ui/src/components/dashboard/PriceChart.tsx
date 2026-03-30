@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { createChart, ColorType, IChartApi, CandlestickSeries } from 'lightweight-charts';
+import { useCurrency, Currency } from '@/contexts/CurrencyContext';
 
 interface ChartProps {
   data: {
@@ -15,6 +16,9 @@ interface ChartProps {
 export function PriceChart({ data, symbol }: ChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const { convertPrice, currency } = useCurrency();
+  const isCrypto = symbol.includes(':');
+  const baseCurrency: Currency = isCrypto ? 'USD' : 'IDR';
 
   useEffect(() => {
     if (!chartContainerRef.current || !data || data.length === 0) return;
@@ -27,10 +31,10 @@ export function PriceChart({ data, symbol }: ChartProps) {
       
       return {
         time: timeStr,
-        open: item.open,
-        high: item.high,
-        low: item.low,
-        close: item.close,
+        open: convertPrice(item.open, baseCurrency),
+        high: convertPrice(item.high, baseCurrency),
+        low: convertPrice(item.low, baseCurrency),
+        close: convertPrice(item.close, baseCurrency),
       };
     });
 
@@ -92,7 +96,7 @@ export function PriceChart({ data, symbol }: ChartProps) {
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, [data]);
+  }, [data, convertPrice, currency, baseCurrency]);
 
   return (
     <div className="w-full bg-[#0f0f0f] border border-neutral-800 rounded-md p-4 relative">

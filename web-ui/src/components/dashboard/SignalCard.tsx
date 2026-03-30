@@ -1,22 +1,37 @@
 import { DecisionResult } from "@/types";
 import { getSignalColor, getConfidenceColor } from "@/lib/utils";
-import { Zap } from "lucide-react";
+import { Zap, Star } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useFavorite } from "@/contexts/FavoriteContext";
 
 export function SignalCard({ data }: { data: DecisionResult }) {
   const { t } = useLanguage();
+  const { isFavorite, toggleFavorite } = useFavorite();
+  
+  const cleanSymbol = data.symbol.includes(':') ? data.symbol.split(':')[1] : data.symbol;
+  const market = data.symbol.includes(':') ? 'crypto' : 'idx';
+  const isFav = isFavorite(cleanSymbol);
 
   return (
     <div className="bg-[#141414] border border-neutral-800 rounded-lg overflow-hidden flex flex-col md:flex-row">
       {/* Left side: Symbol & Main Signal */}
       <div className="p-5 md:p-8 flex-1 border-b md:border-b-0 md:border-r border-neutral-800 flex flex-col justify-center">
-        <div className="flex items-baseline gap-2 md:gap-3 mb-2">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white m-0 leading-none truncate max-w-full">
-            {data.symbol.includes(':') ? data.symbol.split(':')[1] : data.symbol}
-          </h1>
-          <span className="text-neutral-500 font-medium tracking-widest text-xs md:text-sm shrink-0">
-            {data.symbol.includes(':') ? data.symbol.split(':')[0] : 'IDX'}
-          </span>
+        <div className="flex items-center gap-3 md:gap-4 mb-2">
+          <div className="flex items-baseline gap-2 md:gap-3">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white m-0 leading-none truncate max-w-full">
+              {cleanSymbol}
+            </h1>
+            <span className="text-neutral-500 font-medium tracking-widest text-xs md:text-sm shrink-0 uppercase">
+              {market}
+            </span>
+          </div>
+          <button 
+            onClick={() => toggleFavorite(cleanSymbol, market)}
+            className="group p-1.5 hover:bg-neutral-800 rounded-md transition-colors cursor-pointer"
+            title={isFav ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Star className={`w-6 h-6 md:w-8 md:h-8 transition-colors ${isFav ? 'fill-yellow-500 text-yellow-500' : 'text-neutral-600 group-hover:text-neutral-400'}`} />
+          </button>
         </div>
         
         <div className="flex items-center gap-2 md:gap-3 mt-3 md:mt-4 flex-wrap">

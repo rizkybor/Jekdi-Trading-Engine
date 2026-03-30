@@ -30,8 +30,10 @@ function subscribeLanguage(callback: () => void) {
   };
 }
 
+const getServerSnapshot = () => DEFAULT_LANGUAGE;
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const language = useSyncExternalStore(subscribeLanguage, readStoredLanguage, () => DEFAULT_LANGUAGE);
+  const language = useSyncExternalStore(subscribeLanguage, readStoredLanguage, getServerSnapshot);
 
   const handleSetLanguage = useCallback((lang: Language) => {
     if (typeof window === "undefined") return;

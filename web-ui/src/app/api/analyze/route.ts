@@ -56,6 +56,11 @@ export async function GET(request: Request) {
           { error: "Limit API DataSectors harian Anda telah habis. Silakan coba kembali besok hari." }, 
           { status: 429 }
         );
+      } else if (response.status === 401 || response.status === 403) {
+        return NextResponse.json(
+          { errorKey: "datasectorsUnauthorized" }, 
+          { status: 401 }
+        );
       } else {
         throw new Error("API responded with " + response.status);
       }

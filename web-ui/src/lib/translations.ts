@@ -6,6 +6,7 @@ export const translations = {
     searchPlaceholder: "Enter Ticker (e.g. BBRI)",
     compilingData: "Compiling Market Data",
     fetchError: "Failed to fetch analysis for ",
+    datasectorsUnauthorized: "DataSectors API key is invalid or unauthorized.",
     
     // Signal Card
     algorithmScore: "Algorithm Score",
@@ -84,6 +85,7 @@ export const translations = {
     searchPlaceholder: "Masukkan Kode (cth. BBRI)",
     compilingData: "Menyusun Data Pasar",
     fetchError: "Gagal melakukan analisa untuk saham ",
+    datasectorsUnauthorized: "Kunci API DataSectors tidak valid atau tidak memiliki akses (Unauthorized).",
     
     // Signal Card
     algorithmScore: "Skor Algoritma",

@@ -2,10 +2,14 @@ import { DecisionResult } from "@/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ActivitySquare, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCurrency, Currency } from "@/contexts/CurrencyContext";
 
 export function IndicatorGrid({ data }: { data: DecisionResult }) {
   const { t } = useLanguage();
-  
+  const { convertPrice, currency } = useCurrency();
+  const isCrypto = data.symbol.includes(':');
+  const baseCurrency: Currency = isCrypto ? 'USD' : 'IDR';
+
   // Helper to determine status and color based on value
   const getRsiStatus = (val: number) => {
     if (val > 70) return { label: t('overbought'), color: "text-rose-400", icon: TrendingDown };
@@ -28,6 +32,9 @@ export function IndicatorGrid({ data }: { data: DecisionResult }) {
   const rsi = getRsiStatus(data.indicators.rsi);
   const macd = getMacdStatus(data.indicators.macd);
   const ma = getMaStatus(data.indicators.ma20, data.indicators.ma50);
+  
+  const formattedMa20 = convertPrice(data.indicators.ma20, baseCurrency).toFixed(currency === 'IDR' ? 0 : 2);
+  const formattedMa50 = convertPrice(data.indicators.ma50, baseCurrency).toFixed(currency === 'IDR' ? 0 : 2);
 
   return (
     <Card>
@@ -69,8 +76,8 @@ export function IndicatorGrid({ data }: { data: DecisionResult }) {
             <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-2">MA20 vs MA50</span>
             <div>
               <div className="flex items-baseline gap-1 mb-1 truncate">
-                <span className="text-lg md:text-xl font-bold text-white truncate">{data.indicators.ma20.toFixed(0)}</span>
-                <span className="text-neutral-600 text-xs truncate">/ {data.indicators.ma50.toFixed(0)}</span>
+                <span className="text-lg md:text-xl font-bold text-white truncate">{formattedMa20}</span>
+                <span className="text-neutral-600 text-xs truncate">/ {formattedMa50}</span>
               </div>
               <div className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest ${ma.color}`}>
                 <ma.icon className="w-3 h-3 shrink-0" />
