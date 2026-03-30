@@ -19,9 +19,13 @@ Tidak ada satu strategi yang cocok untuk semua kondisi pasar. Jekdi dibekali kec
 - **Smart Pullback:** Mencari peluang *entry* rendah risiko saat harga terkoreksi dalam tren naik yang sehat.
 - **Breakout Detection:** Menangkap momentum saat harga menembus level resistensi kunci yang dikonfirmasi oleh lonjakan volume.
 - **Trend Continuation:** Membonceng tren super-kuat tanpa harus menunggu koreksi.
+- **Extreme Scalping (Khusus Crypto):** Memanfaatkan momen kepanikan pasar dengan menangkap *reversal* cepat saat indikator sangat *oversold* di level support krusial.
 
-### 4. Manajemen Risiko Terintegrasi
-Trading bukan hanya soal mencari untung, tapi bagaimana melindungi modal Anda. Jekdi tidak hanya memberikan sinyal *BUY*, tetapi langsung melengkapinya dengan **Trade Setup** yang matang. Anda akan langsung mendapatkan rekomendasi titik **Entry**, **Stop Loss**, dan **Take Profit** yang menjaga *Risk to Reward Ratio* tetap rasional dan menguntungkan dalam jangka panjang.
+### 4. Manajemen Risiko Terintegrasi & Adaptive Trading Plan
+Trading bukan hanya soal mencari untung, tapi bagaimana melindungi modal Anda. Jekdi tidak hanya memberikan sinyal *BUY*, tetapi langsung melengkapinya dengan:
+- **Adaptive Trading Plan:** Jekdi membedakan profil Anda! Untuk Saham, ia akan membuatkan *Swing Plan* & *Position Plan*. Untuk Crypto, ia akan membuatkan *Short Term (Intraday)*, *Mid Term*, hingga *Long Term Plan* lengkap dengan alasan teknikalnya.
+- **Trade Setup Matang:** Rekomendasi titik **Entry**, **Stop Loss**, dan **Take Profit** yang menjaga *Risk to Reward Ratio* tetap rasional dan menguntungkan dalam jangka panjang.
+- **Smart Recommendation:** Arahan *real-time* layaknya mentor *trading* pribadi. Misalnya, saat sinyal HOLD muncul, Jekdi akan menyarankan Anda untuk menahan posisi namun mengetatkan *Trailing Stop*. Saat BUY, Jekdi akan mengingatkan Anda untuk tidak melakukan *all-in*.
 
 ### 5. Transparansi Logika (Explainable AI)
 Banyak *robot trading* bekerja seperti "kotak hitam" (Blackbox) yang memberikan sinyal tanpa alasan. Jekdi sebaliknya; kami sangat transparan. Di panel **Decision Logic**, Jekdi akan menjelaskan langkah demi langkah *mengapa* sinyal tersebut dikeluarkan, membantu Anda belajar dan memahami struktur pasar seperti seorang profesional.
@@ -43,7 +47,7 @@ Jekdi beroperasi selayaknya seorang Manajer Investasi (Quant). Keputusan tidak d
    - Menghitung **RSI (Relative Strength Index)** untuk mencari area *oversold* (jenuh jual) atau *overbought* (jenuh beli).
    - Menggunakan **MACD** untuk memvalidasi apakah momentum banteng (*bullish*) benar-benar sudah masuk.
 3. **Strategy Layer (Pencari Pola):**
-   - Jekdi mencari kesesuaian antara harga saat ini dengan 3 strategi utamanya (Pullback, Breakout, atau Continuation). 
+   - Jekdi mencari kesesuaian antara harga saat ini dengan 4 strategi utamanya (Pullback, Breakout, Continuation, atau Scalping). 
    - Jika *Crypto*, Jekdi akan memberikan toleransi yang lebih luas pada *range RSI* dan konfirmasi sinyal agar bisa masuk pasar lebih cepat.
 4. **Scoring System (Sistem Nilai Akhir):**
    - Semua faktor di atas akan dijumlahkan menjadi sebuah **Algoritma Score (0 - 100)**.
@@ -79,6 +83,7 @@ Ini adalah contekan (cheat sheet) Anda untuk diinput ke aplikasi broker / sekuri
 
 ### Langkah 5: Analisa Melalui Chart & Konteks
 Jadilah trader yang pintar dengan melihat grafik pergerakan harga (*Price Chart*) yang sudah tersedia dan membaca panel tambahan:
+- **Trading Recommendation:** Arahan taktis *real-time* tentang apa yang sebaiknya Anda lakukan dengan uang Anda (misalnya memotong kerugian atau merealisasikan keuntungan).
 - **Indikator Teknis:** Lihat ringkasan RSI, MACD, dan kondisi likuiditas volume.
 - **Logika Keputusan:** Buka panel ini untuk membaca poin-per-poin alasan (*reasoning*) mengapa Jekdi mengambil kesimpulan tersebut.
 

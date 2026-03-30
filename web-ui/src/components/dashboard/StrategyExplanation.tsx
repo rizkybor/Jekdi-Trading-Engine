@@ -1,6 +1,6 @@
 import { StrategyType } from "@/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { BookOpen, ArrowUpRight, GitPullRequest, ArrowRight } from "lucide-react";
+import { BookOpen, ArrowUpRight, GitPullRequest, ArrowRight, Zap } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export function StrategyExplanation({ strategy }: { strategy: StrategyType }) {
@@ -26,6 +26,12 @@ export function StrategyExplanation({ strategy }: { strategy: StrategyType }) {
       desc: t('continuationDesc'),
       icon: ArrowRight,
       color: "text-emerald-400"
+    },
+    scalping: {
+      title: t('scalpingTitle'),
+      desc: t('scalpingDesc'),
+      icon: Zap,
+      color: "text-rose-400"
     }
   };
 

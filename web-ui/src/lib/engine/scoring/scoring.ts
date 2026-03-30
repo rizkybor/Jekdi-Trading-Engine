@@ -1,6 +1,6 @@
 export interface ScoringInput {
   targetDirection: "BUY" | "SELL" | "HOLD" | "NONE";
-  strategyUsed: "pullback" | "breakout" | "continuation" | null;
+  strategyUsed: "pullback" | "breakout" | "continuation" | "scalping" | null;
   rsiVal: number;
   rsiSignal: "bullish" | "bearish" | "neutral";
   macdSignal: "bullish" | "bearish" | "neutral";
@@ -20,6 +20,7 @@ export function calculateScore(input: ScoringInput): number {
   if (strategyUsed === "pullback") score += 35;
   if (strategyUsed === "breakout") score += 40;
   if (strategyUsed === "continuation") score += 30;
+  if (strategyUsed === "scalping") score += 35;
 
   // 2. Trend Alignment (Max 20)
   if (targetDirection === "BUY" && trend === "uptrend") score += 20;

@@ -38,7 +38,7 @@ export interface EngineConfig {
 export type SignalType = "BUY" | "SELL" | "HOLD" | "NO TRADE";
 export type TrendType = "uptrend" | "downtrend" | "sideways";
 export type ConfidenceLevel = "low" | "medium" | "high";
-export type StrategyType = "pullback" | "breakout" | "continuation" | null;
+export type StrategyType = "pullback" | "breakout" | "continuation" | "scalping" | null;
 
 export interface IndicatorOutput {
   value: number;
@@ -66,8 +66,32 @@ export interface DecisionResult {
     ma20: number;
     ma50: number;
   };
+  timeframeTargets?: {
+    idx?: {
+      swing: { action: "BUY" | "SELL" | "HOLD"; reason: string };
+      position: { action: "BUY" | "SELL" | "HOLD"; reason: string };
+    };
+    crypto?: {
+      shortTerm: { action: "BUY" | "SELL" | "HOLD"; reason: string };
+      midTerm: { action: "BUY" | "SELL" | "HOLD"; reason: string };
+      longTerm: { action: "BUY" | "SELL" | "HOLD"; reason: string };
+    };
+  };
   debug?: {
     strategyChecked: string[];
     rejectedReason: string[];
   };
+  tradingPlans?: TradingPlan[];
+}
+
+export interface TradingPlan {
+  type: "swing" | "position" | "short" | "mid" | "long";
+  horizon: string;
+  mode: "precise" | "range" | "narrative";
+  entry?: number;
+  entryZone?: [number, number] | string;
+  stopLoss: number | string;
+  takeProfit: number | string;
+  riskReward?: number;
+  description: string;
 }

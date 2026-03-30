@@ -4,14 +4,17 @@ Trading Decision Engine untuk Saham (IDX) & Cryptocurrency yang didesain secara 
 
 ## 🌟 Fitur Utama
 
-Engine ini memiliki 3 Strategi Utama (*Edge Strategy*) yang otomatis beradaptasi dengan kondisi pasar:
+Engine ini memiliki 4 Strategi Utama (*Edge Strategy*) yang otomatis beradaptasi dengan kondisi pasar:
 
 1. **Pullback Strategy**: Mencari peluang masuk (*Buy/Sell*) saat harga mengalami retrace/koreksi ke area Moving Average (MA20) atau level Support/Resistance dalam sebuah tren yang valid. (Range RSI dioptimalkan lebih fleksibel untuk pasar Crypto).
 2. **Breakout Strategy**: Mencari peluang masuk saat harga berhasil menembus level Support/Resistance krusial, divalidasi oleh *volume spike* (dilengkapi *Aggressive Mode* opsional).
 3. **Trend Continuation Strategy**: Mendeteksi tren yang sangat kuat di mana harga terus melaju (*rally* / *dump*) tanpa mengalami pullback, mengamankan momentum pergerakan tajam (terutama di pasar Crypto).
+4. **Scalping Strategy (Khusus Crypto)**: Strategi jangka pendek yang menangkap pantulan balik (*reversal*) ekstrem saat indikator RSI menyentuh level sangat jenuh (*oversold* < 30 atau *overbought* > 70) yang bertepatan tepat dengan garis *Support/Resistance* mayor.
 
 ### 🛡️ Adaptive Market Filter & Risk Management
+- **Adaptive Trading Plan**: Sistem tidak hanya memberikan angka baku, tetapi membuatkan rencana khusus per aset berdasarkan tipe trader (Swing/Position untuk Saham, dan Scalping/Swing/Trend untuk Crypto) menggunakan sistem Toleransi Dinamis dan Naratif.
 - **Crypto vs Stock Logic**: Aturan filter volume dan konfirmasi indikator secara otomatis menyesuaikan diri (contoh: *crypto* tidak mewajibkan *volume spike* ekstrim untuk konfirmasi karena volatilitas alaminya, sementara saham diwajibkan).
+- **Smart Recommendations**: Memberikan *insight* secara real-time berdasarkan *signal* yang diberikan, memandu user untuk mengelola *Risk to Reward* dengan lebih baik dan memitigasi FOMO.
 - **Auto Stop Loss**: Dihitung otomatis berdasarkan level *support* / *resistance* terdekat.
 - **Auto Take Profit**: Dihitung otomatis menggunakan target rasio Risk to Reward default 1:2.
 - **Noise Reduction**: Mencegah sinyal palsu dengan menolak transaksi (*NO TRADE*) pada kondisi pasar yang benar-benar mati (*sideways & low volume*) atau terjadi *extreme volatility* yang membahayakan.

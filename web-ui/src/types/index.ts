@@ -37,4 +37,26 @@ export interface DecisionResult {
     close: number;
     volume: number;
   }[];
+  timeframeTargets?: {
+    idx?: {
+      swing: { action: "BUY" | "SELL" | "HOLD"; reason: string };
+      position: { action: "BUY" | "SELL" | "HOLD"; reason: string };
+    };
+    crypto?: {
+      shortTerm: { action: "BUY" | "SELL" | "HOLD"; reason: string };
+      midTerm: { action: "BUY" | "SELL" | "HOLD"; reason: string };
+      longTerm: { action: "BUY" | "SELL" | "HOLD"; reason: string };
+    };
+  };
+  tradingPlans?: {
+    type: "swing" | "position" | "short" | "mid" | "long";
+    horizon: string;
+    mode: "precise" | "range" | "narrative";
+    entry?: number;
+    entryZone?: [number, number] | string;
+    stopLoss: number | string;
+    takeProfit: number | string;
+    riskReward?: number;
+    description: string;
+  }[];
 }

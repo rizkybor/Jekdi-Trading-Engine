@@ -60,20 +60,20 @@ export function evaluateEdgeStrategy(input: EdgeStrategyInput): EdgeStrategyOutp
   // 1. Trade Filter
   const filter = isTradeFilteredOut(volumeContext, isExtremeVolatility, trend, market);
   if (filter.filtered) {
-    reasons.push(`Trade filtered out: ${filter.reason}`);
+    reasons.push(`tradeFiltered: ${filter.reason}`);
     debug.rejectedReason.push(`Filter: ${filter.reason}`);
     return { signal: "NONE", strategyUsed: null, reasons, passedFilter: false, confirmed: false, debug };
   }
 
   // 2. Trend Filter (Only BUY above MA50, Only SELL below MA50)
   if (trend === "uptrend" && currentPrice < maLong) {
-    reasons.push("Price is below MA50 during uptrend, invalidating BUY setup");
+    reasons.push("trendFilterBuy");
     debug.rejectedReason.push("Trend Filter: Price below MA50 in uptrend");
     return { signal: "NONE", strategyUsed: null, reasons, passedFilter: false, confirmed: false, debug };
   }
 
   if (trend === "downtrend" && currentPrice > maLong) {
-    reasons.push("Price is above MA50 during downtrend, invalidating SELL setup");
+    reasons.push("trendFilterSell");
     debug.rejectedReason.push("Trend Filter: Price above MA50 in downtrend");
     return { signal: "NONE", strategyUsed: null, reasons, passedFilter: false, confirmed: false, debug };
   }
@@ -86,16 +86,16 @@ export function evaluateEdgeStrategy(input: EdgeStrategyInput): EdgeStrategyOutp
   const pullback = detectPullback(currentPrice, maShort, rsi, trend, nearSupport, nearResistance, market);
   if (pullback !== "NONE") {
     const targetDirection = pullback === "BUY_PULLBACK" ? "BUY" : "SELL";
-    reasons.push(`Valid ${targetDirection} pullback detected`);
+    reasons.push(`validPullback|${targetDirection}`);
     
     const confirmation = checkConfirmation(candles, isVolumeSpike, macdSignal, targetDirection, market);
     if (!confirmation.confirmed) {
-      reasons.push(`Pullback signal not confirmed. Missing confirmation factors (Req: ${market === "crypto" ? 1 : 2}).`);
+      reasons.push(`unconfirmedPullback|${market === "crypto" ? 1 : 2}`);
       debug.rejectedReason.push("Pullback not confirmed");
       return { signal: "NONE", strategyUsed: "pullback", reasons, passedFilter: true, confirmed: false, debug };
     }
 
-    reasons.push(`Pullback confirmed: ${confirmation.reasons.join(", ")}`);
+    reasons.push(`confirmedPullback|${confirmation.reasons.join(",")}`);
     return { signal: targetDirection, strategyUsed: "pullback", reasons, passedFilter: true, confirmed: true, debug };
   } else {
     debug.rejectedReason.push("Pullback conditions not met");
@@ -106,21 +106,21 @@ export function evaluateEdgeStrategy(input: EdgeStrategyInput): EdgeStrategyOutp
   const breakout = detectBreakout(currentPrice, resistance, support, volumeContext, rsi);
   if (breakout !== "NONE") {
     const targetDirection = breakout === "BUY_BREAKOUT" ? "BUY" : "SELL";
-    reasons.push(`Valid ${targetDirection} breakout detected`);
+    reasons.push(`validBreakout|${targetDirection}`);
     
     if (!aggressiveBreakout) {
-      reasons.push("Breakout detected, wait for confirmation or retest. Returning HOLD.");
+      reasons.push("breakoutWaitConfirmation");
       return { signal: "HOLD", strategyUsed: "breakout", reasons, passedFilter: true, confirmed: true, debug };
     }
 
     const confirmation = checkConfirmation(candles, isVolumeSpike, macdSignal, targetDirection, market);
     if (!confirmation.confirmed) {
-      reasons.push(`Breakout signal not confirmed. Missing confirmation factors (Req: ${market === "crypto" ? 1 : 2}).`);
+      reasons.push(`unconfirmedBreakout|${market === "crypto" ? 1 : 2}`);
       debug.rejectedReason.push("Breakout not confirmed");
       return { signal: "NONE", strategyUsed: "breakout", reasons, passedFilter: true, confirmed: false, debug };
     }
 
-    reasons.push(`Breakout confirmed: ${confirmation.reasons.join(", ")} (Aggressive Mode)`);
+    reasons.push(`confirmedBreakout|${confirmation.reasons.join(",")}`);
     return { signal: targetDirection, strategyUsed: "breakout", reasons, passedFilter: true, confirmed: true, debug };
   } else {
     debug.rejectedReason.push("Breakout conditions not met");
@@ -131,23 +131,58 @@ export function evaluateEdgeStrategy(input: EdgeStrategyInput): EdgeStrategyOutp
   const continuation = detectContinuation(currentPrice, maShort, maLong, rsi, trend, market);
   if (continuation !== "NONE") {
     const targetDirection = continuation === "BUY_CONTINUATION" ? "BUY" : "SELL";
-    reasons.push(`Valid ${targetDirection} trend continuation detected`);
+    reasons.push(`validContinuation|${targetDirection}`);
     
     const confirmation = checkConfirmation(candles, isVolumeSpike, macdSignal, targetDirection, market);
     if (!confirmation.confirmed) {
-      reasons.push(`Continuation signal not confirmed. Missing confirmation factors (Req: ${market === "crypto" ? 1 : 2}).`);
+      reasons.push(`unconfirmedContinuation|${market === "crypto" ? 1 : 2}`);
       debug.rejectedReason.push("Continuation not confirmed");
       return { signal: "NONE", strategyUsed: "continuation", reasons, passedFilter: true, confirmed: false, debug };
     }
 
-    reasons.push(`Continuation confirmed: ${confirmation.reasons.join(", ")}`);
+    reasons.push(`confirmedContinuation|${confirmation.reasons.join(",")}`);
     return { signal: targetDirection, strategyUsed: "continuation", reasons, passedFilter: true, confirmed: true, debug };
   } else {
     debug.rejectedReason.push("Continuation conditions not met");
   }
 
+  // D. Try Scalping Strategy (Crypto Only)
+  if (market === "crypto") {
+    debug.strategyChecked.push("scalping");
+    // Scalping logic: Look for extreme oversold/overbought conditions even against the trend
+    if (rsi < 30 && currentPrice < support * 1.01) { // Oversold and near support
+      const targetDirection = "BUY";
+      reasons.push(`validScalping|${targetDirection}`);
+      
+      const confirmation = checkConfirmation(candles, isVolumeSpike, macdSignal, targetDirection, market);
+      if (!confirmation.confirmed) {
+        reasons.push(`unconfirmedScalping`);
+        debug.rejectedReason.push("Scalping not confirmed");
+        return { signal: "NONE", strategyUsed: "scalping", reasons, passedFilter: true, confirmed: false, debug };
+      }
+      
+      reasons.push(`confirmedScalping|${confirmation.reasons.join(",")}`);
+      return { signal: targetDirection, strategyUsed: "scalping", reasons, passedFilter: true, confirmed: true, debug };
+    } else if (rsi > 70 && currentPrice > resistance * 0.99) { // Overbought and near resistance
+      const targetDirection = "SELL";
+      reasons.push(`validScalping|${targetDirection}`);
+      
+      const confirmation = checkConfirmation(candles, isVolumeSpike, macdSignal, targetDirection, market);
+      if (!confirmation.confirmed) {
+        reasons.push(`unconfirmedScalping`);
+        debug.rejectedReason.push("Scalping not confirmed");
+        return { signal: "NONE", strategyUsed: "scalping", reasons, passedFilter: true, confirmed: false, debug };
+      }
+      
+      reasons.push(`confirmedScalping|${confirmation.reasons.join(",")}`);
+      return { signal: targetDirection, strategyUsed: "scalping", reasons, passedFilter: true, confirmed: true, debug };
+    } else {
+      debug.rejectedReason.push("Scalping conditions not met");
+    }
+  }
+
   // Fallback if no strategy matches
-  reasons.push("No clear trading setup detected");
+  reasons.push("noClearSetup");
   debug.rejectedReason.push("No strategy matched");
   return { signal: "NONE", strategyUsed: null, reasons, passedFilter: true, confirmed: false, debug };
 }

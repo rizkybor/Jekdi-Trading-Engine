@@ -38,16 +38,16 @@ export function IndicatorGrid({ data }: { data: DecisionResult }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-neutral-800 rounded-md overflow-hidden border border-neutral-800">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-neutral-800 rounded-md overflow-hidden border border-neutral-800">
           
           {/* RSI */}
           <div className="bg-[#0f0f0f] p-4 flex flex-col justify-between h-full">
             <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-2">RSI (14)</span>
             <div>
-              <span className="text-2xl font-bold text-white block mb-1">{data.indicators.rsi.toFixed(2)}</span>
+              <span className="text-lg md:text-xl font-bold text-white block mb-1 truncate">{data.indicators.rsi.toFixed(2)}</span>
               <div className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest ${rsi.color}`}>
-                <rsi.icon className="w-3 h-3" />
-                {rsi.label}
+                <rsi.icon className="w-3 h-3 shrink-0" />
+                <span className="truncate">{rsi.label}</span>
               </div>
             </div>
           </div>
@@ -56,10 +56,10 @@ export function IndicatorGrid({ data }: { data: DecisionResult }) {
           <div className="bg-[#0f0f0f] p-4 flex flex-col justify-between h-full">
             <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-2">MACD</span>
             <div>
-              <span className="text-2xl font-bold text-white block mb-1">{data.indicators.macd.toFixed(2)}</span>
+              <span className="text-lg md:text-xl font-bold text-white block mb-1 truncate">{data.indicators.macd.toFixed(2)}</span>
               <div className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest ${macd.color}`}>
-                <macd.icon className="w-3 h-3" />
-                {macd.label}
+                <macd.icon className="w-3 h-3 shrink-0" />
+                <span className="truncate">{macd.label}</span>
               </div>
             </div>
           </div>
@@ -68,13 +68,13 @@ export function IndicatorGrid({ data }: { data: DecisionResult }) {
           <div className="bg-[#0f0f0f] p-4 flex flex-col justify-between h-full">
             <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-2">MA20 vs MA50</span>
             <div>
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-xl font-bold text-white">{data.indicators.ma20.toFixed(0)}</span>
-                <span className="text-neutral-600 text-xs">/ {data.indicators.ma50.toFixed(0)}</span>
+              <div className="flex items-baseline gap-1 mb-1 truncate">
+                <span className="text-lg md:text-xl font-bold text-white truncate">{data.indicators.ma20.toFixed(0)}</span>
+                <span className="text-neutral-600 text-xs truncate">/ {data.indicators.ma50.toFixed(0)}</span>
               </div>
               <div className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest ${ma.color}`}>
-                <ma.icon className="w-3 h-3" />
-                {ma.label}
+                <ma.icon className="w-3 h-3 shrink-0" />
+                <span className="truncate">{ma.label}</span>
               </div>
             </div>
           </div>
@@ -83,12 +83,12 @@ export function IndicatorGrid({ data }: { data: DecisionResult }) {
           <div className="bg-[#0f0f0f] p-4 flex flex-col justify-between h-full">
             <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-2">Volume</span>
             <div>
-              <span className="text-xl font-bold text-white capitalize block mb-1">{data.context.volume.replace('_', ' ')}</span>
+              <span className="text-lg md:text-xl font-bold text-white capitalize block mb-1 truncate">{data.context.volume.replace('_', ' ')}</span>
               <div className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest ${
                 data.context.volume.includes('spike') ? 'text-emerald-400' : 'text-neutral-400'
               }`}>
-                {data.context.volume.includes('spike') ? <TrendingUp className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                {t('liquidity')}
+                {data.context.volume.includes('spike') ? <TrendingUp className="w-3 h-3 shrink-0" /> : <Minus className="w-3 h-3 shrink-0" />}
+                <span className="truncate">{t('liquidity')}</span>
               </div>
             </div>
           </div>

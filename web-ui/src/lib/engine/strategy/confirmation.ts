@@ -18,28 +18,28 @@ export function checkConfirmation(
   if (targetDirection === "BUY") {
     if (current.close > previous.close) {
       confirmations++;
-      reasons.push("Bullish candle close (Close > Prev Close)");
+      reasons.push("bullishCandle");
     }
     if (isVolumeSpike) {
       confirmations++;
-      reasons.push("Volume spike detected");
+      reasons.push("volumeSpike");
     }
     if (macdSignal === "bullish") {
       confirmations++;
-      reasons.push("MACD indicates bullish momentum/cross");
+      reasons.push("macdBullish");
     }
   } else {
     if (current.close < previous.close) {
       confirmations++;
-      reasons.push("Bearish candle close (Close < Prev Close)");
+      reasons.push("bearishCandle");
     }
     if (isVolumeSpike) {
       confirmations++;
-      reasons.push("Volume spike detected");
+      reasons.push("volumeSpike");
     }
     if (macdSignal === "bearish") {
       confirmations++;
-      reasons.push("MACD indicates bearish momentum/cross");
+      reasons.push("macdBearish");
     }
   }
 

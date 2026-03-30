@@ -8,6 +8,7 @@ import { ReasoningPanel } from "@/components/dashboard/ReasoningPanel";
 import { IndicatorGrid } from "@/components/dashboard/IndicatorGrid";
 import { StrategyExplanation } from "@/components/dashboard/StrategyExplanation";
 import { PriceChart } from "@/components/dashboard/PriceChart";
+import { RecommendationCard } from "@/components/dashboard/RecommendationCard";
 import { Search, Loader2, Globe, Clock, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -15,36 +16,41 @@ export default function Dashboard() {
   const [data, setData] = useState<DecisionResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
-  const [symbol, setSymbol] = useState("BBCA"); 
+  const [symbol, setSymbol] = useState("BBCA");
   const [market, setMarket] = useState<"idx" | "crypto">("idx");
   const { t, language, setLanguage } = useLanguage();
 
-  const fetchAnalysis = async (ticker: string, targetMarket: "idx" | "crypto" = market) => {
+  const fetchAnalysis = async (
+    ticker: string,
+    targetMarket: "idx" | "crypto" = market,
+  ) => {
     if (!ticker.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/analyze?symbol=${ticker}&market=${targetMarket}`);
+      const res = await fetch(
+        `/api/analyze?symbol=${ticker}&market=${targetMarket}`,
+      );
       const result = await res.json();
-      
+
       if (!res.ok) {
         if (res.status === 429) {
           throw new Error("Limit API Harian Habis");
         }
         throw new Error(result.error || "Gagal mengambil data");
       }
-      
+
       setLimitReached(false);
       setData(result);
     } catch (err: unknown) {
       console.error(err);
-      
+
       // Handle specifically 429 errors from our backend
       const message = err instanceof Error ? err.message : "";
       if (message === "Limit API Harian Habis") {
         setLimitReached(true);
         setData(null);
       } else {
-        alert(t('fetchError') + ticker);
+        alert(t("fetchError") + ticker);
       }
     } finally {
       setLoading(false);
@@ -62,24 +68,40 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[#0a0a0a] text-neutral-200 selection:bg-neutral-800">
       {/* Top Navigation Bar */}
       <header className="border-b border-neutral-800 bg-[#0f0f0f] sticky top-0 z-50">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 bg-white rounded-sm flex items-center justify-center">
-              <span className="text-black font-black text-sm">J</span>
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-3 md:h-16 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-0">
+          <div className="flex items-center justify-between w-full md:w-auto">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="w-6 h-6 md:w-7 md:h-7 bg-white rounded-sm flex items-center justify-center shrink-0">
+                <span className="text-black font-black text-sm md:text-base">J</span>
+              </div>
+              <span className="font-bold text-white tracking-tight text-sm md:text-base truncate">
+                Jekdi Trading Engine
+              </span>
             </div>
-            <span className="font-bold text-white tracking-tight">Jekdi Trading Engine</span>
+            {/* Language toggle on mobile */}
+            <button
+              onClick={() => setLanguage(language === "en" ? "id" : "en")}
+              className="md:hidden cursor-pointer flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#141414] border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors shrink-0"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-widest">
+                {language}
+              </span>
+            </button>
           </div>
 
-          <div className="flex items-center gap-3 w-full max-w-xl justify-end">
-            <div className="flex bg-[#141414] border border-neutral-800 rounded-md p-1">
+          <div className="flex items-center gap-2 md:gap-3 w-full md:max-w-xl md:justify-end">
+            <div className="flex bg-[#141414] border border-neutral-800 rounded-md p-1 shrink-0">
               <button
                 onClick={() => {
                   setMarket("idx");
                   if (symbol !== "BBCA") setSymbol("BBCA");
                   fetchAnalysis("BBCA", "idx");
                 }}
-                className={`px-3 py-1 text-xs font-bold uppercase tracking-widest rounded-sm transition-colors ${
-                  market === "idx" ? "bg-neutral-800 text-white" : "text-neutral-500 hover:text-neutral-300"
+                className={`cursor-pointer px-2.5 py-1.5 md:px-3 md:py-1 text-[10px] md:text-xs font-bold uppercase tracking-widest rounded-sm transition-colors ${
+                  market === "idx"
+                    ? "bg-neutral-800 text-white"
+                    : "text-neutral-500 hover:text-neutral-300"
                 }`}
               >
                 IDX
@@ -90,35 +112,44 @@ export default function Dashboard() {
                   if (symbol !== "BTCUSDT") setSymbol("BTCUSDT");
                   fetchAnalysis("BTCUSDT", "crypto");
                 }}
-                className={`px-3 py-1 text-xs font-bold uppercase tracking-widest rounded-sm transition-colors ${
-                  market === "crypto" ? "bg-neutral-800 text-white" : "text-neutral-500 hover:text-neutral-300"
+                className={`cursor-pointer px-2.5 py-1.5 md:px-3 md:py-1 text-[10px] md:text-xs font-bold uppercase tracking-widest rounded-sm transition-colors ${
+                  market === "crypto"
+                    ? "bg-neutral-800 text-white"
+                    : "text-neutral-500 hover:text-neutral-300"
                 }`}
               >
                 Crypto
               </button>
             </div>
-            
-            <div className="relative w-full max-w-xs">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
-              <input 
-                type="text" 
+
+            <div className="relative w-full md:max-w-xs flex-1">
+              <Search className="w-3.5 h-3.5 md:w-4 md:h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+              <input
+                type="text"
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                onKeyDown={(e) => e.key === 'Enter' && fetchAnalysis(symbol)}
-                placeholder={market === 'crypto' ? 'Ex: BTCUSDT...' : t('searchPlaceholder')} 
-                className="w-full bg-[#141414] border border-neutral-800 text-white text-sm px-9 py-1.5 rounded-md outline-none focus:border-neutral-600 transition-colors uppercase placeholder:normal-case placeholder:text-neutral-600"
+                onKeyDown={(e) => e.key === "Enter" && fetchAnalysis(symbol)}
+                placeholder={
+                  market === "crypto"
+                    ? "Ex: BTCUSDT..."
+                    : t("searchPlaceholder")
+                }
+                className="w-full bg-[#141414] border border-neutral-800 text-white text-xs md:text-sm px-8 md:px-9 py-2 md:py-1.5 rounded-md outline-none focus:border-neutral-600 transition-colors uppercase placeholder:normal-case placeholder:text-neutral-600"
               />
               {loading && (
-                <Loader2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 animate-spin" />
               )}
             </div>
-            
-            <button 
-              onClick={() => setLanguage(language === 'en' ? 'id' : 'en')}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#141414] border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors shrink-0"
+
+            {/* Language toggle on desktop */}
+            <button
+              onClick={() => setLanguage(language === "en" ? "id" : "en")}
+              className="hidden md:flex cursor-pointer items-center gap-2 px-3 py-1.5 rounded-md bg-[#141414] border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors shrink-0"
             >
               <Globe className="w-4 h-4" />
-              <span className="text-xs font-bold uppercase tracking-widest">{language}</span>
+              <span className="text-xs font-bold uppercase tracking-widest">
+                {language}
+              </span>
             </button>
           </div>
         </div>
@@ -128,7 +159,9 @@ export default function Dashboard() {
         {loading && !data ? (
           <div className="flex flex-col items-center justify-center py-32 space-y-4">
             <Loader2 className="w-8 h-8 text-neutral-600 animate-spin" />
-            <p className="text-neutral-500 text-sm font-medium uppercase tracking-widest">{t('compilingData')}</p>
+            <p className="text-neutral-500 text-sm font-medium uppercase tracking-widest">
+              {t("compilingData")}
+            </p>
           </div>
         ) : limitReached ? (
           <div className="flex flex-col items-center justify-center py-32 space-y-6 max-w-md mx-auto text-center">
@@ -136,39 +169,56 @@ export default function Dashboard() {
               <AlertTriangle className="w-8 h-8 text-rose-500" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-white tracking-tight">Daily Usage Limit Reached</h2>
+              <h2 className="text-2xl font-bold text-white tracking-tight">
+                Daily Usage Limit Reached
+              </h2>
               <p className="text-neutral-400">
-                You have reached your DataSectors API daily limit (100 of 100 requests). 
-                Please try again tomorrow when the limit resets, or upgrade your API plan.
+                You have reached your DataSectors API daily limit (100 of 100
+                requests). Please try again tomorrow when the limit resets, or
+                upgrade your API plan.
               </p>
             </div>
             <div className="bg-[#141414] border border-neutral-800 rounded-md p-4 w-full flex items-center justify-between">
-               <span className="text-neutral-500 text-sm font-medium">Daily Limit</span>
-               <span className="text-rose-500 font-bold">100 / 100</span>
+              <span className="text-neutral-500 text-sm font-medium">
+                Daily Limit
+              </span>
+              <span className="text-rose-500 font-bold">100 / 100</span>
             </div>
           </div>
         ) : data ? (
           <>
             <div className="flex items-center gap-2 text-neutral-500 text-xs font-medium uppercase tracking-widest bg-[#141414] border border-neutral-800 w-fit px-3 py-1.5 rounded-sm">
               <Clock className="w-3.5 h-3.5" />
-              <span>{t('marketDataAsOf')} {new Date().toLocaleDateString(language === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+              <span>
+                {t("marketDataAsOf")}{" "}
+                {new Date().toLocaleDateString(
+                  language === "id" ? "id-ID" : "en-US",
+                  { day: "numeric", month: "short", year: "numeric" },
+                )}
+              </span>
             </div>
-            
+
             <SignalCard data={data} />
 
-            {data.chartData && (
+            {/* {data.chartData && (
               <div className="w-full">
                 <PriceChart data={data.chartData} symbol={data.symbol} />
               </div>
-            )}
+            )} */}
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-8 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+              <div className="lg:col-span-8 space-y-6 md:space-y-8">
+                {data.chartData && (
+                  <div className="w-full overflow-hidden rounded-md border border-neutral-800 bg-[#0f0f0f]">
+                    <PriceChart data={data.chartData} symbol={data.symbol} />
+                  </div>
+                )}
                 <TradeSetupCard data={data} />
                 <IndicatorGrid data={data} />
               </div>
 
-              <div className="lg:col-span-4 space-y-6">
+              <div className="lg:col-span-4 space-y-6 md:space-y-8">
+                <RecommendationCard data={data} />
                 <ReasoningPanel reasons={data.reasons} />
                 {data.strategyUsed && (
                   <StrategyExplanation strategy={data.strategyUsed} />

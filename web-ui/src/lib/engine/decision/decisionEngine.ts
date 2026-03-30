@@ -12,6 +12,7 @@ import { detectVolatility } from "../context/volatility";
 import { evaluateEdgeStrategy } from "../strategy/edgeStrategy";
 import { calculateScore } from "../scoring/scoring";
 import { PreCalculatedIndicators } from "../indicators/datasectorsAdapter";
+import { generateTradingPlans } from "../tradingPlan/tradingPlan";
 
 export function analyze(
   symbol: string,
@@ -160,7 +161,94 @@ export function analyze(
     takeProfit = currentPrice - (risk * config.riskManagement.riskRewardRatio);
   }
 
-  return {
+  // --- Timeframe Targets (IDX & Crypto) ---
+  let timeframeTargets: DecisionResult["timeframeTargets"] = undefined;
+  
+  if (market === "idx") {
+    // IDX: Swing Plan (2-10 hari) vs Position Plan (minggu-bulan)
+    let swingAction: "BUY" | "SELL" | "HOLD" = "HOLD";
+    let swingReason = "";
+    if (finalSignal === "BUY" && (edgeResult.strategyUsed === "pullback" || edgeResult.strategyUsed === "breakout")) {
+      swingAction = "BUY";
+      swingReason = "Pullback/Breakout valid, momentum positif (2-10 hari)";
+    } else if (finalSignal === "SELL") {
+      swingAction = "SELL";
+      swingReason = "Momentum negatif, amankan profit/cut loss";
+    } else {
+      swingAction = "HOLD";
+      swingReason = "Wait and see, arah belum terkonfirmasi";
+    }
+
+    let positionAction: "BUY" | "SELL" | "HOLD" = "HOLD";
+    let positionReason = "";
+    if (maShortVal > maLongVal && trend === "uptrend") {
+      positionAction = "BUY";
+      positionReason = "Trend besar masih terjaga naik (Uptrend kuat)";
+    } else if (maShortVal < maLongVal && trend === "downtrend") {
+      positionAction = "SELL";
+      positionReason = "Fase Downtrend panjang, hindari beli";
+    } else {
+      positionAction = "HOLD";
+      positionReason = "Fase akumulasi / distribusi panjang";
+    }
+
+    timeframeTargets = {
+      idx: {
+        swing: { action: swingAction, reason: swingReason },
+        position: { action: positionAction, reason: positionReason }
+      }
+    };
+  } else if (market === "crypto") {
+    // Crypto: Short Term (Intraday/Scalping), Mid Term (Swing), Long Term (Trend)
+    let stAction: "BUY" | "SELL" | "HOLD" = "HOLD";
+    let stReason = "";
+    if (rsiVal < 35 || edgeResult.strategyUsed === "scalping" && finalSignal === "BUY") {
+      stAction = "BUY";
+      stReason = "RSI Ekstrem Oversold (Peluang Reversal Cepat)";
+    } else if (rsiVal > 65 || edgeResult.strategyUsed === "scalping" && finalSignal === "SELL") {
+      stAction = "SELL";
+      stReason = "RSI Ekstrem Overbought (Rawan Koreksi Cepat)";
+    } else {
+      stAction = "HOLD";
+      stReason = "Tidak ada anomali intraday";
+    }
+
+    let mtAction: "BUY" | "SELL" | "HOLD" = "HOLD";
+    let mtReason = "";
+    if (finalSignal === "BUY" && (edgeResult.strategyUsed === "pullback" || edgeResult.strategyUsed === "breakout")) {
+      mtAction = "BUY";
+      mtReason = "Momentum Swing positif (1-7 hari)";
+    } else if (finalSignal === "SELL") {
+      mtAction = "SELL";
+      mtReason = "Momentum Swing negatif, kurangi porsi";
+    } else {
+      mtAction = "HOLD";
+      mtReason = "Menunggu momentum Breakout/Pullback";
+    }
+
+    let ltAction: "BUY" | "SELL" | "HOLD" = "HOLD";
+    let ltReason = "";
+    if (maShortVal > maLongVal && trend === "uptrend") {
+      ltAction = "BUY";
+      ltReason = "MA20 > MA50 (Banteng memegang kendali)";
+    } else if (maShortVal < maLongVal && trend === "downtrend") {
+      ltAction = "SELL";
+      ltReason = "MA20 < MA50 (Beruang memegang kendali)";
+    } else {
+      ltAction = "HOLD";
+      ltReason = "Fase konsolidasi jangka panjang";
+    }
+
+    timeframeTargets = {
+      crypto: {
+        shortTerm: { action: stAction, reason: stReason },
+        midTerm: { action: mtAction, reason: mtReason },
+        longTerm: { action: ltAction, reason: ltReason }
+      }
+    };
+  }
+
+  const baseResult = {
     symbol,
     signal: finalSignal,
     strategyUsed: edgeResult.strategyUsed,
@@ -180,6 +268,23 @@ export function analyze(
       ma20: Number(maShortVal.toFixed(2)),
       ma50: Number(maLongVal.toFixed(2)),
     },
+    timeframeTargets,
     debug: edgeResult.debug,
+  };
+
+  // Generate adaptive trading plans
+  const tradingPlans = generateTradingPlans(
+    market,
+    currentPrice,
+    supportResistanceLevels.support,
+    supportResistanceLevels.resistance,
+    maShortVal,
+    maLongVal,
+    baseResult as DecisionResult
+  );
+
+  return {
+    ...baseResult,
+    tradingPlans,
   };
 }

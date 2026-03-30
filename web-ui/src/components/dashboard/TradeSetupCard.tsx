@@ -1,7 +1,7 @@
 import { DecisionResult } from "@/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import { Target, ShieldAlert, Coins } from "lucide-react";
+import { Target, ShieldAlert, Coins, Clock, CalendarDays, Activity } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export function TradeSetupCard({ data }: { data: DecisionResult }) {
@@ -31,7 +31,7 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
             <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider flex items-center gap-1.5 mb-2">
               {t('entryPrice')}
             </span>
-            <span className="text-xl font-bold text-white">{formatCurrency(data.entry, language, currency)}</span>
+            <span className="text-lg md:text-xl font-bold text-white">{formatCurrency(data.entry, language, currency)}</span>
           </div>
           
           <div className="bg-[#0f0f0f] p-4 flex flex-col justify-between relative overflow-hidden group">
@@ -39,7 +39,7 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
             <span className="text-rose-500/80 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 mb-2 relative z-10">
               <ShieldAlert className="w-3 h-3" /> {t('stopLoss')}
             </span>
-            <span className="text-xl font-bold text-rose-500 relative z-10">{formatCurrency(data.stopLoss, language, currency)}</span>
+            <span className="text-lg md:text-xl font-bold text-rose-500 relative z-10">{formatCurrency(data.stopLoss, language, currency)}</span>
           </div>
 
           <div className="bg-[#0f0f0f] p-4 flex flex-col justify-between relative overflow-hidden group">
@@ -47,11 +47,11 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
             <span className="text-emerald-500/80 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 mb-2 relative z-10">
               <Target className="w-3 h-3" /> {t('takeProfit')}
             </span>
-            <span className="text-xl font-bold text-emerald-500 relative z-10">{formatCurrency(data.takeProfit, language, currency)}</span>
+            <span className="text-lg md:text-xl font-bold text-emerald-500 relative z-10">{formatCurrency(data.takeProfit, language, currency)}</span>
           </div>
         </div>
 
-        <div className="space-y-3 bg-[#0f0f0f] p-4 rounded-md border border-neutral-800/50">
+        <div className="space-y-3 bg-[#0f0f0f] p-4 rounded-md border border-neutral-800/50 mb-6">
           <div className="flex justify-between text-xs font-medium uppercase tracking-widest">
             <span className="text-neutral-500">{t('riskRewardRatio')}</span>
             <span className="font-bold text-white">1 : {rrRatio}</span>
@@ -66,6 +66,86 @@ export function TradeSetupCard({ data }: { data: DecisionResult }) {
             <span>{t('reward')} ({rrRatio})</span>
           </div>
         </div>
+
+        {data.tradingPlans && (
+          <div className={`grid grid-cols-1 gap-4 mt-6 ${data.tradingPlans.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+            {data.tradingPlans.map((plan, idx) => {
+              // Icon & Color mapping based on horizon type
+              let Icon = Clock;
+              let iconColor = "text-neutral-400";
+              const title = plan.horizon;
+
+              if (plan.type === "short" || plan.type === "swing") {
+                Icon = Clock;
+                iconColor = "text-emerald-400";
+              } else if (plan.type === "mid") {
+                Icon = Activity;
+                iconColor = "text-blue-400";
+              } else if (plan.type === "long" || plan.type === "position") {
+                Icon = CalendarDays;
+                iconColor = "text-purple-400";
+              }
+
+              return (
+                <div key={idx} className="bg-[#0f0f0f] p-4 rounded-md border border-neutral-800 flex flex-col h-full">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Icon className={`w-4 h-4 ${iconColor}`} />
+                    <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">{title}</span>
+                  </div>
+
+                  <div className="space-y-3 mb-4 flex-1">
+                    {/* Entry Section */}
+                    <div>
+                      <span className="text-[10px] text-neutral-500 uppercase tracking-widest mb-1 block">Target Entry</span>
+                      {plan.mode === "precise" && plan.entry !== undefined ? (
+                        <span className="text-sm font-bold text-white">{plan.entry === 0 ? "-" : formatCurrency(plan.entry, language, currency)}</span>
+                      ) : plan.mode === "range" && Array.isArray(plan.entryZone) ? (
+                        <span className="text-sm font-bold text-white">
+                          {plan.entryZone[0] === 0 ? "-" : `${formatCurrency(plan.entryZone[0], language, currency)} - ${formatCurrency(plan.entryZone[1], language, currency)}`}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-neutral-300 leading-relaxed block">{plan.entryZone}</span>
+                      )}
+                    </div>
+
+                    {/* Stop Loss & Take Profit Section (Only for precise & range) */}
+                    {(plan.mode === "precise" || plan.mode === "range") && (
+                      <div className="flex justify-between items-center gap-4">
+                        <div>
+                          <span className="text-[10px] text-rose-500/80 uppercase tracking-widest mb-1 block">Stop Loss</span>
+                          <span className="text-sm font-bold text-rose-500">{plan.stopLoss === 0 ? "-" : formatCurrency(plan.stopLoss as number, language, currency)}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] text-emerald-500/80 uppercase tracking-widest mb-1 block">Take Profit</span>
+                          <span className="text-sm font-bold text-emerald-500">{plan.takeProfit === 0 ? "-" : formatCurrency(plan.takeProfit as number, language, currency)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Narrative SL/TP */}
+                    {plan.mode === "narrative" && (
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-[10px] text-rose-500/80 uppercase tracking-widest mb-0.5 block">Risk Control</span>
+                          <span className="text-xs text-neutral-300 leading-relaxed block">{plan.stopLoss}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-emerald-500/80 uppercase tracking-widest mb-0.5 block">Profit Target</span>
+                          <span className="text-xs text-neutral-300 leading-relaxed block">{plan.takeProfit}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Description Footer */}
+                  <div className="pt-3 border-t border-neutral-800/50 mt-auto">
+                    <p className="text-[11px] text-neutral-500 leading-relaxed">{plan.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
